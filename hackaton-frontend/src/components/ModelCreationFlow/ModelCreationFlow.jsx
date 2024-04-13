@@ -8,6 +8,7 @@ import ReactFlow, {
   addEdge,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { nodeTypes } from "../../utils/nodeTypes";
 
 function ModelCreationFlow({ data, layerName }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -31,6 +32,7 @@ function ModelCreationFlow({ data, layerName }) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        nodeTypes={nodeTypes}
       >
         <Controls />
         <MiniMap />

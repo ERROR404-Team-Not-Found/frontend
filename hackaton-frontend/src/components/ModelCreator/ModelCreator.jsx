@@ -76,6 +76,7 @@ function ModelCreator() {
   const handleAddLayer = () => {
     setCreatedNode({
       id: `Layer-${layerCount}`,
+      type: "modelNode",
       data: { label: selectedLayer, type: "layer" },
       position: { x: 100, y: yAxis },
     });
@@ -89,6 +90,7 @@ function ModelCreator() {
   const handleAddActvFunc = () => {
     setCreatedNode({
       id: `Activation-${actvFuncCount}`,
+      type: "modelNode",
       data: { label: selectedActivation, type: "activation-function" },
       position: { x: 300, y: yAxis },
     });
