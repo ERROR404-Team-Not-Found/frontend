@@ -17,8 +17,10 @@ function ModelCreator() {
   const [activation, setActivation] = useState(null);
   const [layerCount, setLayerCount] = useState(1);
   const [actvFuncCount, setActvFuncCount] = useState(1);
-  const [selectedLayer, setSelectedLayer] = useState(null); // State to store selected layer
-  const [selectedActivation, setSelectedActivation] = useState(null); // State to store selected activation function
+  const [selectedLayer, setSelectedLayer] = useState(null);
+  const [selectedActivation, setSelectedActivation] = useState(null);
+  const [yAxis, setYAxis] = useState(100);
+  const [createdNode, setCreatedNode] = useState(null);
 
   const handleCreateLayerClick = async () => {
     setIsCreatingLayer(true);
@@ -46,23 +48,46 @@ function ModelCreator() {
 
   const handleCancelCreateLayerClick = () => {
     setIsCreatingLayer(false);
+    setSelectedLayer(null);
   };
 
   const handleCancelCreateActvFuncClick = () => {
     setIsCreatingActvFunc(false);
+    setSelectedActivation(null);
   };
 
-  const handleAddLayer = (formData) => {
-    const data = {};
+  const handleAddLayer = () => {
+    setCreatedNode({
+      id: `Layer-${layerCount}`,
+      type: "layer",
+      data: { label: selectedLayer },
+      position: { x: 100, y: yAxis },
+    });
+    setYAxis(yAxis + 50);
+    setLayerCount(layerCount + 1);
+
+    setIsCreatingLayer(false);
+    setSelectedLayer(null);
   };
 
-  const handleAddActvFunc = (formData) => {
-    const data = {};
+  const handleAddActvFunc = () => {
+    setCreatedNode({
+      id: `Activation-${actvFuncCount}`,
+      type: "activation",
+      data: { label: selectedActivation },
+      position: { x: 300, y: yAxis },
+    });
+    setYAxis(yAxis + 50);
+    setActvFuncCount(actvFuncCount + 1);
+
+    setIsCreatingActvFunc(false);
+    setSelectedActivation(null);
   };
 
   return (
     <div style={{ width: "100%", height: "90vh", position: "relative" }}>
-      <ModelCreationFlow data={{}} layerName={`Layer ${layerCount}`} />
+      <ModelCreationFlow data={createdNode} layerName={createdNode?.id} />
+
       {isCreatingLayer ? (
         <Grid
           container

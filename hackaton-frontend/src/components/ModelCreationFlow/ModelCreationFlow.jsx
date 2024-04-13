@@ -17,12 +17,15 @@ function ModelCreationFlow({ data, layerName }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState(edgeArray);
 
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => setEdgeArray((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
-  useEffect(() => {}, [data, layerName]);
-
+  useEffect(() => {
+    if (data) {
+      setDisplayedNodes((prevNodes) => [...prevNodes, data]);
+    }
+  }, [data, layerName]);
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <ReactFlow
