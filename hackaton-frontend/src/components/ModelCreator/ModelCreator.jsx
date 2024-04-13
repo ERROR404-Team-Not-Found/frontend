@@ -10,7 +10,7 @@ import TextField from "@mui/material/TextField";
 function ModelCreator() {
   const [isCreating, setIsCreating] = useState(false);
   const [layerCount, setLayerCount] = useState(1);
-  const [layerOptions, setLayerOptions] = useState([]);
+  const [layerOptions, setLayerOptions] = useState(["Op1", "Op2"]);
 
   const handleCreateClick = () => {
     setIsCreating(true);
@@ -42,7 +42,10 @@ function ModelCreator() {
           }}
         >
           <Grid xs={12} container item sx={{ pb: "20px" }}>
-            <Typography variant="h5" sx={{ color: "var(--textColor)" }}>
+            <Typography
+              variant="h5"
+              sx={{ color: "var(--textColor)", p: "10px" }}
+            >
               Layer Details
             </Typography>
             <Divider
@@ -68,9 +71,40 @@ function ModelCreator() {
               disablePortal
               id="layer-architecture"
               options={layerOptions}
-              sx={{ width: 300 }}
+              sx={{
+                width: "90%",
+                "& .MuiAutocomplete-inputRoot": {
+                  border: "1px solid var(--secondaryColor)",
+                  borderRadius: "20px",
+                  "&:hover": {
+                    borderColor: "var(--textColor)",
+                  },
+                },
+                "& .MuiInputLabel-outlined": {
+                  color: "var(--textColor)",
+                },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "transparent",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "transparent",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "transparent",
+                  },
+                },
+              }}
               renderInput={(params) => (
-                <TextField {...params} label="Layer Architecture" />
+                <TextField
+                  sx={{
+                    "& .MuiInputBase-input": {
+                      color: "var(--textColor)",
+                    },
+                  }}
+                  {...params}
+                  label="Layer Architecture"
+                />
               )}
             />
           </Grid>
@@ -88,9 +122,40 @@ function ModelCreator() {
               disablePortal
               id="activation-func"
               options={layerOptions}
-              sx={{ width: 300 }}
+              sx={{
+                width: "90%",
+                "& .MuiAutocomplete-inputRoot": {
+                  border: "1px solid var(--secondaryColor)",
+                  borderRadius: "20px",
+                  "&:hover": {
+                    borderColor: "var(--textColor)",
+                  },
+                },
+                "& .MuiInputLabel-outlined": {
+                  color: "var(--textColor)",
+                },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "transparent",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "transparent",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "transparent",
+                  },
+                },
+              }}
               renderInput={(params) => (
-                <TextField {...params} label="Activation Function" />
+                <TextField
+                  sx={{
+                    "& .MuiInputBase-input": {
+                      color: "var(--textColor)",
+                    },
+                  }}
+                  {...params}
+                  label="Activation Function"
+                />
               )}
             />
           </Grid>
@@ -106,7 +171,23 @@ function ModelCreator() {
               container
               sx={{ justifyContent: "center", alignContent: "center" }}
             >
-              <Button fullWidth variant="contained" onClick={handleCancelClick}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleCancelClick}
+                sx={{
+                  padding: "10px",
+                  pr: "20px",
+                  pl: "20px",
+                  borderRadius: "5px",
+                  backgroundColor: "var(--mainColor)",
+                  color: "var(--textColor)",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "var(--secondaryColor)",
+                  },
+                }}
+              >
                 Cancel
               </Button>
             </Grid>
@@ -116,7 +197,23 @@ function ModelCreator() {
               container
               sx={{ justifyContent: "center", alignContent: "center" }}
             >
-              <Button fullWidth variant="contained" onClick={handleAddLayer}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleAddLayer}
+                sx={{
+                  padding: "10px",
+                  pr: "20px",
+                  pl: "20px",
+                  borderRadius: "5px",
+                  backgroundColor: "var(--mainColor)",
+                  color: "var(--textColor)",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "var(--secondaryColor)",
+                  },
+                }}
+              >
                 Add Layer
               </Button>
             </Grid>
