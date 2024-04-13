@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import ModelCreationFlow from "./components/ModelCreationFlow/ModelCreationFlow";
 import BasicTable from "./components/ModelCard/ModelCard";
+import ModelCreator from "./components/ModelCreator/ModelCreator";
 
 
 function App() {
@@ -16,7 +17,8 @@ function App() {
           path="/"
           element={<Layout logout={keycloakInstance} username={username} />}
         >
-          <Route path="main" element={<BasicTable />} />
+          <Route index element={<BasicTable />} />
+          <Route path="creator" element={<ModelCreator />} />
         </Route>
       ) : (
         ""
