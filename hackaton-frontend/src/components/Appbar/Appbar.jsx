@@ -11,16 +11,9 @@ import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import Grid from "@mui/material/Grid";
-import { styled } from "@mui/system";
 import Divider from "@mui/material/Divider";
 
 const pages = ["Dashboard", "Models", "My Models", "Logout"];
-
-const StyledMenuItem = styled(MenuItem)({
-  "&:hover": {
-    backgroundColor: "#1679AB",
-  },
-});
 
 function ResponsiveAppBar({ logout, username }) {
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -34,8 +27,22 @@ function ResponsiveAppBar({ logout, username }) {
   };
 
   const handleMenuItemClick = (page) => {
-    console.log(`Hello from ${page}`);
-    // TO IMPLEMENT FUNCTIONALITY
+    switch (page) {
+      case "Dashboard":
+        console.log("dashboard");
+        break;
+      case "Models":
+        console.log("models");
+        break;
+      case "My Models":
+        console.log("my models");
+        break;
+      case "Logout":
+        logout.logout();
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -94,27 +101,34 @@ function ResponsiveAppBar({ logout, username }) {
                   },
                 }}
               >
-                <StyledMenuItem
-                  disabled
+                <Typography
+                  variant="body1"
                   sx={{
-                    color: "var(--textColor)",
+                    color: "var(--mainColor)",
                     display: { xs: "flex", md: "none" },
+                    padding: "10px",
                   }}
                 >
                   {username}
-                </StyledMenuItem>
+                </Typography>
+
                 <Divider
                   sx={{
                     display: { xs: "flex", md: "none" },
                   }}
                 />
                 {pages.map((page, index) => (
-                  <StyledMenuItem
+                  <MenuItem
                     key={index}
                     onClick={() => handleMenuItemClick(page)}
+                    sx={{
+                      "&:hover": {
+                        backgroundColor: "#1679AB",
+                      },
+                    }}
                   >
                     {page}
-                  </StyledMenuItem>
+                  </MenuItem>
                 ))}
               </Menu>
             </Grid>

@@ -1,5 +1,4 @@
 import { Outlet } from "react-router-dom";
-import { Divider } from "@mui/material";
 import ResponsiveAppBar from "../Appbar/Appbar";
 
 const Layout = ({ logout, username }) => {
