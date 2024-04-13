@@ -1,17 +1,41 @@
-import React from "react";
-import ReactFlow from "reactflow";
+import React, { useCallback, useEffect, useState } from "react";
+import ReactFlow, {
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+} from "reactflow";
 import "reactflow/dist/style.css";
 
-const initialNodes = [
-  { id: "1", position: { x: 0, y: 0 }, data: { label: "1" } },
-  { id: "2", position: { x: 0, y: 100 }, data: { label: "2" } },
-];
-const initialEdges = [{ id: "e1-2", source: "1", target: "2" }];
+function ModelCreationFlow({ data, layerName }) {
+  const [displayedNodes, setDisplayedNodes] = useState([]);
+  const [edgeArray, setEdgeArray] = useState([]);
 
-function ModelCreationFlow() {
+  const [nodes, setNodes, onNodesChange] = useNodesState(displayedNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(edgeArray);
+
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges]
+  );
+
+  useEffect(() => {}, [data, layerName]);
+
   return (
-    <div style={{ width: "100vw", height: "100vh" }}>
-      <ReactFlow nodes={initialNodes} edges={initialEdges} />
+    <div style={{ width: "100%", height: "100%" }}>
+      <ReactFlow
+        nodes={displayedNodes}
+        edges={edgeArray}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+      >
+        <Controls />
+        <MiniMap />
+        <Background variant="dots" gap={12} size={1} />
+      </ReactFlow>
     </div>
   );
 }

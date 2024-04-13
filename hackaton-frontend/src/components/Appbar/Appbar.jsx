@@ -45,7 +45,7 @@ function ResponsiveAppBar({ logout, username }) {
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#074173" }}>
+    <AppBar position="static" sx={{ backgroundColor: "var(--mainColor)" }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <Grid container justifyContent="space-between" alignItems="center">
@@ -92,11 +92,11 @@ function ResponsiveAppBar({ logout, username }) {
                   ".MuiMenuItem-root": {
                     color: "var(--textColor)",
                     "&:hover": {
-                      backgroundColor: "var(--mainColor)",
+                      backgroundColor: "var(--secondaryColor)",
                     },
                   },
                   ".MuiMenu-list": {
-                    backgroundColor: "#fff",
+                    backgroundColor: "var(--mainColor)",
                   },
                 }}
               >
