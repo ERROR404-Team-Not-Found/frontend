@@ -13,7 +13,7 @@ import Grid from "@mui/material/Grid";
 import Divider from "@mui/material/Divider";
 import { useNavigate } from "react-router-dom";
 
-const pages = ["Dashboard", "Models", "My Models", "Logout"];
+const pages = ["Dashboard", "Model Creator", "My Models", "Logout"];
 
 function ResponsiveAppBar({ logout, username }) {
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -31,8 +31,9 @@ function ResponsiveAppBar({ logout, username }) {
       case "Dashboard":
         console.log("dashboard");
         break;
-      case "Models":
-        console.log("models");
+      case "Model Creator":
+        setAnchorElNav(null);
+        navigate("/creator");
         break;
       case "My Models":
         setAnchorElNav(null);
