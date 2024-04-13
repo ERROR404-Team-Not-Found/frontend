@@ -103,7 +103,7 @@ function ResponsiveAppBar({ logout, username }) {
                 <Typography
                   variant="body1"
                   sx={{
-                    color: "var(--mainColor)",
+                    color: "var(--secondaryColor)",
                     display: { xs: "flex", md: "none" },
                     padding: "10px",
                   }}
