@@ -174,7 +174,7 @@ function ModelCreator() {
               }}
             >
               <InfoOutlinedIcon sx={{ pr: "10px" }} />
-              {selectedLayer
+              {selectedLayer && selectedLayer !== "Loading ..."
                 ? layers.find((layer) => layer.name === selectedLayer)
                     .description
                 : "No layer selected"}
@@ -222,7 +222,11 @@ function ModelCreator() {
             >
               <Button
                 fullWidth
-                disabled={selectedLayer ? false : true}
+                disabled={
+                  selectedLayer && selectedLayer !== "Loading ..."
+                    ? false
+                    : true
+                }
                 variant="outlined"
                 onClick={handleAddLayer}
                 sx={{
@@ -383,7 +387,7 @@ function ModelCreator() {
               }}
             >
               <InfoOutlinedIcon sx={{ pr: "10px" }} />
-              {selectedActivation
+              {selectedActivation && selectedActivation !== "Loading ..."
                 ? activation.find(
                     (actvFunc) => actvFunc.name === selectedActivation
                   ).description
@@ -432,7 +436,11 @@ function ModelCreator() {
             >
               <Button
                 fullWidth
-                disabled={selectedActivation ? false : true}
+                disabled={
+                  selectedActivation && selectedActivation !== "Loading ..."
+                    ? false
+                    : true
+                }
                 variant="outlined"
                 onClick={handleAddActvFunc}
                 sx={{
