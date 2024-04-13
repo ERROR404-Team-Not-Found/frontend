@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ModelCreationFlow from "../ModelCreationFlow/ModelCreationFlow";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -21,30 +21,47 @@ function ModelCreator() {
   const [selectedActivation, setSelectedActivation] = useState(null);
   const [yAxis, setYAxis] = useState(100);
   const [createdNode, setCreatedNode] = useState(null);
+  const isLayerCreateRun = useRef(false);
+  const isActvFuncCreateRun = useRef(false);
 
   const handleCreateLayerClick = async () => {
     setIsCreatingLayer(true);
-
-    try {
-      const layersResponse = await axios.get(GET_LAYERS);
-
-      setLayers(layersResponse.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
   };
 
   const handleCreateActvFuncClick = async () => {
     setIsCreatingActvFunc(true);
-
-    try {
-      const activationsResponse = await axios.get(GET_ACTIVATION);
-
-      setActivation(activationsResponse.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
   };
+
+  useEffect(() => {
+    if (isLayerCreateRun.current) return;
+    isLayerCreateRun.current = true;
+    const getLayers = async () => {
+      try {
+        const layersResponse = await axios.get(GET_LAYERS);
+
+        setLayers(layersResponse.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    getLayers();
+  });
+
+  useEffect(() => {
+    if (isActvFuncCreateRun.current) return;
+    isActvFuncCreateRun.current = true;
+    const getActivationFunction = async () => {
+      try {
+        const activationsResponse = await axios.get(GET_ACTIVATION);
+
+        setActivation(activationsResponse.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    getActivationFunction();
+  });
 
   const handleCancelCreateLayerClick = () => {
     setIsCreatingLayer(false);
@@ -59,8 +76,7 @@ function ModelCreator() {
   const handleAddLayer = () => {
     setCreatedNode({
       id: `Layer-${layerCount}`,
-      type: "layer",
-      data: { label: selectedLayer },
+      data: { label: selectedLayer, type: "layer" },
       position: { x: 100, y: yAxis },
     });
     setYAxis(yAxis + 50);
@@ -73,8 +89,7 @@ function ModelCreator() {
   const handleAddActvFunc = () => {
     setCreatedNode({
       id: `Activation-${actvFuncCount}`,
-      type: "activation",
-      data: { label: selectedActivation },
+      data: { label: selectedActivation, type: "activation-function" },
       position: { x: 300, y: yAxis },
     });
     setYAxis(yAxis + 50);

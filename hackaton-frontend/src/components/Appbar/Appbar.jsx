@@ -11,12 +11,13 @@ import Container from "@mui/material/Container";
 import MenuItem from "@mui/material/MenuItem";
 import Grid from "@mui/material/Grid";
 import Divider from "@mui/material/Divider";
+import { useNavigate } from "react-router-dom";
 
 const pages = ["Dashboard", "Models", "My Models", "Logout"];
 
 function ResponsiveAppBar({ logout, username }) {
   const [anchorElNav, setAnchorElNav] = useState(null);
-
+  const navigate = useNavigate();
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };
@@ -34,7 +35,8 @@ function ResponsiveAppBar({ logout, username }) {
         console.log("models");
         break;
       case "My Models":
-        console.log("my models");
+        setAnchorElNav(null);
+        navigate("/");
         break;
       case "Logout":
         logout.logout();

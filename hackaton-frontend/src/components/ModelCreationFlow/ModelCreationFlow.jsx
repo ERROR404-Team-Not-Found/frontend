@@ -10,27 +10,24 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 
 function ModelCreationFlow({ data, layerName }) {
-  const [displayedNodes, setDisplayedNodes] = useState([]);
-  const [edgeArray, setEdgeArray] = useState([]);
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(displayedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(edgeArray);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const onConnect = useCallback(
-    (params) => setEdgeArray((eds) => addEdge(params, eds)),
+    (params) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
   useEffect(() => {
     if (data) {
-      setDisplayedNodes((prevNodes) => [...prevNodes, data]);
+      setNodes((prevNodes) => [...prevNodes, data]);
     }
   }, [data, layerName]);
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <ReactFlow
-        nodes={displayedNodes}
-        edges={edgeArray}
+        nodes={nodes}
+        edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
