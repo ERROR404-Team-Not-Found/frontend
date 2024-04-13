@@ -8,7 +8,7 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import TablePagination from '@mui/material/TablePagination';
-import { GET_ARCHITECTURE, GET_MODELS, GET_DATASET} from '../../utils/apiEndpoints';
+import { GET_ARCHITECTURE, GET_MODELS, GET_DATASET, GET_TRANSACTIONS} from '../../utils/apiEndpoints';
 import Cookies from 'js-cookie';
 import Axios from 'axios';
 import Editor from "@monaco-editor/react";
@@ -88,6 +88,22 @@ export default function BasicTable() {
       return ('0' + (byte & 0xFF).toString(16)).slice(-2);
     }).join('');
   }
+
+  const hexToString = (hex) => {
+    if (hex.startsWith('0x')) {
+        hex = hex.slice(2);
+    }
+
+    if (hex !== null && hex.length > 0) {
+      const pairs = hex.match(/.{1,2}/g);
+
+      const chars = pairs.map(pair => String.fromCharCode(parseInt(pair, 16)));
+  
+      return chars.join('');
+  } else {
+      return JSON.stringify({ title: "Nothing to show" });
+  }
+}
 
   const handleDatasetButtonClick = async (model_name) => {
     try {
@@ -182,8 +198,17 @@ export default function BasicTable() {
     }
   };
 
+  const convertWeiToEther = (wei) => {
+    return wei / Math.pow(10, 18);
+  }
+
   const handleTrainButtonClick = async (model_name) => {
     try {
+
+
+
+
+      //la final dupa ce facem tot train ul facem faza asta cu weighturile
       if (typeof window !== 'undefined' && window.ethereum) {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const userAddress = accounts[0];
@@ -197,8 +222,8 @@ export default function BasicTable() {
         const messageHex = stringToHex(JSON.stringify(message));
         const transactionObject = {
           from: userAddress,
-          to: this.data.value.Eth_adress,
-          value: '0x' + (parseInt(0.1, 10)* 1e18).toString(16),
+          to: "0xCFEc104a5234493A463915e29A9b32D90D6b9c5B",
+          value: '0x' + (parseInt(1, 10)* 1e18).toString(16),
           gasLimit: '0x000000001',
           data: messageHex,
         };
@@ -207,6 +232,21 @@ export default function BasicTable() {
           method: 'eth_sendTransaction',
           params: [transactionObject],
         });
+        
+        const response = await Axios.get(GET_TRANSACTIONS(userAddress));
+
+        // const mappedTransactions = response.data.map((transaction) => ({
+        //   hash: transaction.hash,
+        //   to: transaction.to,
+        //   value: convertWeiToEther(+transaction.value),
+        //   input: hexToString(transaction.input),
+        //   user_id: JSON.parse(hexToString(transaction.input)).user_id,
+        //   model_name: JSON.parse(hexToString(transaction.input)).model_name,
+        //   hash: JSON.parse(hexToString(transaction.input)).hash
+        // }));
+
+        // console.log(mappedTransactions);
+
       }
     } catch (error) {
       console.error('Error fetching data for Train:', error);
