@@ -245,12 +245,48 @@ export default function BasicTable() {
     >
       <TableContainer component={Paper} sx={{ width: "80vw" }}>
         <Table aria-label="simple table">
-          <TableHead>
+          <TableHead sx={{ borderBottom: "2px solid var(--secondaryColor)" }}>
             <TableRow>
-              <TableCell align="center">Name</TableCell>
-              <TableCell align="center">Architecture</TableCell>
-              <TableCell align="center">Dataset</TableCell>
-              <TableCell align="center">Train</TableCell>
+              <TableCell
+                align="center"
+                sx={{
+                  fontSize: "1.2rem",
+                  fontWeight: "bold",
+                  color: "var(--mainColor)",
+                }}
+              >
+                Name
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{
+                  fontSize: "1.2rem",
+                  fontWeight: "bold",
+                  color: "var(--mainColor)",
+                }}
+              >
+                Architecture
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{
+                  fontSize: "1.2rem",
+                  fontWeight: "bold",
+                  color: "var(--mainColor)",
+                }}
+              >
+                Dataset
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{
+                  fontSize: "1.2rem",
+                  fontWeight: "bold",
+                  color: "var(--mainColor)",
+                }}
+              >
+                Train
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
