@@ -23,7 +23,7 @@ function ModelCreationFlow({ data, layerName }) {
     if (data) {
       setNodes((prevNodes) => [...prevNodes, data]);
     }
-  }, [data, layerName]);
+  }, [data, layerName, setNodes]);
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <ReactFlow
@@ -41,4 +41,5 @@ function ModelCreationFlow({ data, layerName }) {
     </div>
   );
 }
+
 export default ModelCreationFlow;

@@ -77,7 +77,11 @@ function ModelCreator() {
     setCreatedNode({
       id: `Layer-${layerCount}`,
       type: "modelNode",
-      data: { label: selectedLayer, type: "layer" },
+      data: {
+        label: selectedLayer,
+        type: "layer",
+        inputs: layers.find((layer) => layer.name === selectedLayer).inputs,
+      },
       position: { x: 100, y: yAxis },
     });
     setYAxis(yAxis + 50);
@@ -91,7 +95,13 @@ function ModelCreator() {
     setCreatedNode({
       id: `Activation-${actvFuncCount}`,
       type: "modelNode",
-      data: { label: selectedActivation, type: "activation-function" },
+      data: {
+        label: selectedActivation,
+        type: "activation-function",
+        inputs: activation.find(
+          (actvFunc) => actvFunc.name === selectedActivation
+        ).inputs,
+      },
       position: { x: 300, y: yAxis },
     });
     setYAxis(yAxis + 50);
@@ -120,6 +130,7 @@ function ModelCreator() {
             padding: "10px",
             borderRadius: "5px",
             backgroundColor: "var(--mainColor)",
+            border: "3px solid var(--secondaryColor)",
           }}
         >
           <Grid xs={12} container item sx={{ pb: "20px" }}>
@@ -331,6 +342,7 @@ function ModelCreator() {
             padding: "10px",
             borderRadius: "5px",
             backgroundColor: "var(--mainColor)",
+            border: "3px solid var(--secondaryColor)",
           }}
         >
           <Grid xs={12} container item sx={{ pb: "20px" }}>
