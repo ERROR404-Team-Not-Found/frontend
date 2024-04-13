@@ -6,21 +6,36 @@ import Grid from "@mui/material/Grid";
 import Divider from "@mui/material/Divider";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
+import axios from "axios";
+import { GET_LAYERS, GET_ACTIVATION } from "../../utils/apiEndpoints";
 
 function ModelCreator() {
   const [isCreating, setIsCreating] = useState(false);
+  const [layers, setLayers] = useState(null);
+  const [activation, setActivation] = useState(null);
   const [layerCount, setLayerCount] = useState(1);
-  const [layerOptions, setLayerOptions] = useState(["Op1", "Op2"]);
 
-  const handleCreateClick = () => {
+  const handleCreateClick = async () => {
     setIsCreating(true);
+
+    try {
+      const activationsResponse = await axios.get(GET_ACTIVATION);
+      const layersResponse = await axios.get(GET_LAYERS);
+
+      setActivation(activationsResponse.data);
+      setLayers(layersResponse.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
 
   const handleCancelClick = () => {
     setIsCreating(false);
   };
 
-  const handleAddLayer = (formData) => {};
+  const handleAddLayer = (formData) => {
+    const data = {};
+  };
 
   return (
     <div style={{ width: "100%", height: "90vh", position: "relative" }}>
@@ -28,6 +43,7 @@ function ModelCreator() {
       {isCreating ? (
         <Grid
           container
+          item
           xs={10}
           sm={6}
           md={4}
@@ -70,7 +86,9 @@ function ModelCreator() {
             <Autocomplete
               disablePortal
               id="layer-architecture"
-              options={layerOptions}
+              options={
+                layers ? layers.map((item) => item.name) : ["Loading ..."]
+              }
               sx={{
                 width: "90%",
                 "& .MuiAutocomplete-inputRoot": {
@@ -93,6 +111,9 @@ function ModelCreator() {
                   "&.Mui-focused fieldset": {
                     borderColor: "transparent",
                   },
+                },
+                "&.Mui-focused .MuiInputLabel-outlined": {
+                  color: "var(--textColor)",
                 },
               }}
               renderInput={(params) => (
@@ -121,7 +142,11 @@ function ModelCreator() {
             <Autocomplete
               disablePortal
               id="activation-func"
-              options={layerOptions}
+              options={
+                activation
+                  ? activation.map((item) => item.name)
+                  : ["Loading ..."]
+              }
               sx={{
                 width: "90%",
                 "& .MuiAutocomplete-inputRoot": {
@@ -144,6 +169,9 @@ function ModelCreator() {
                   "&.Mui-focused fieldset": {
                     borderColor: "transparent",
                   },
+                },
+                "&.Mui-focused .MuiInputLabel-outlined": {
+                  color: "var(--textColor)",
                 },
               }}
               renderInput={(params) => (
@@ -173,18 +201,20 @@ function ModelCreator() {
             >
               <Button
                 fullWidth
-                variant="contained"
+                variant="outlined"
                 onClick={handleCancelClick}
                 sx={{
                   padding: "10px",
                   pr: "20px",
                   pl: "20px",
                   borderRadius: "5px",
+                  borderColor: "var(--secondaryColor)",
                   backgroundColor: "var(--mainColor)",
                   color: "var(--textColor)",
                   cursor: "pointer",
                   "&:hover": {
-                    backgroundColor: "var(--secondaryColor)",
+                    borderColor: "var(--textColor)",
+                    backgroundColor: "transparent",
                   },
                 }}
               >
@@ -199,18 +229,20 @@ function ModelCreator() {
             >
               <Button
                 fullWidth
-                variant="contained"
+                variant="outlined"
                 onClick={handleAddLayer}
                 sx={{
                   padding: "10px",
                   pr: "20px",
                   pl: "20px",
                   borderRadius: "5px",
+                  borderColor: "var(--secondaryColor)",
                   backgroundColor: "var(--mainColor)",
                   color: "var(--textColor)",
                   cursor: "pointer",
                   "&:hover": {
-                    backgroundColor: "var(--secondaryColor)",
+                    borderColor: "var(--textColor)",
+                    backgroundColor: "transparent",
                   },
                 }}
               >
