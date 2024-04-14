@@ -21,7 +21,19 @@ function ModelCreationFlow({ data, layerName }) {
 
   useEffect(() => {
     if (data) {
+      const addEdgeToNewNode = (currentNodeId, newNodeId) => {
+        const edge = {
+          id: `e-${currentNodeId}-${newNodeId}`,
+          source: currentNodeId,
+          target: newNodeId,
+          type: "default",
+        };
+        setEdges((eds) => addEdge(edge, eds));
+      };
+
       setNodes((prevNodes) => [...prevNodes, data]);
+
+      addEdgeToNewNode(nodes[nodes?.length - 1]?.id, data?.id);
     }
   }, [data, layerName, setNodes]);
   return (
