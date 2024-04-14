@@ -84,7 +84,7 @@ function ModelCreator() {
         jsonData.layers.push({ name: node.label, params: node.data.inputs });
       }
       jsonData.num_classes = classesCount;
-      await axios.post(SAVE_MODEL, jsonData);
+      // await axios.post(SAVE_MODEL, jsonData);
       openSnackbar("Success: Model has been saved!");
     } catch (error) {
       console.error(error);
@@ -611,7 +611,7 @@ function ModelCreator() {
         onClick={handleOpenDialog}
         sx={{
           display:
-            layerCount + actvFuncCount < 8 ||
+            layerCount + actvFuncCount < 6 ||
             isCreatingLayer ||
             isCreatingActvFunc
               ? "none"
