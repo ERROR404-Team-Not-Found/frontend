@@ -8,14 +8,16 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import TablePagination from '@mui/material/TablePagination';
-import { GET_ARCHITECTURE, GET_MODELS, GET_DATASET, GET_TRANSACTIONS} from '../../utils/apiEndpoints';
+import { GET_ARCHITECTURE, GET_MODELS, GET_DATASET, GET_VERSIONS, TRAIN, STATUS, VERSION} from '../../utils/apiEndpoints';
 import Cookies from 'js-cookie';
 import Axios from 'axios';
 import Editor from "@monaco-editor/react";
 import ImageModal from '../ImageModal/ImageModal';
 import CSVModal from '../CSVModal/CSVModal';
-import { json } from 'react-router-dom';
-import Papa from 'papaparse';
+import SelectModal from '../SelectModal/SelectModal';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import TrainingModal from '../TrainingModal/TrainingModal';
 
 function createData(name) {
   return { name };
@@ -30,6 +32,19 @@ export default function BasicTable() {
   const [modelName, setmodelName] = useState(null);
   const [contentType, setcontentType] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showSelectModal, setShowSelectModal] = useState(false);
+  const [selectOptions, setSelectOptions] = useState([]);
+
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState('error');
+
+  const [modelToTrain, setModelToTrain] = useState(null);
+  const [trainingModalOpen, setTrainingModalOpen] = useState(false);
+
+  const [trainingStatusIntervalId, setTrainingStatusIntervalId] = useState(null);
+
+  const [status, setStatus] = useState(null);
 
 
   useEffect(() => {
@@ -83,27 +98,16 @@ export default function BasicTable() {
     setcontentType(null);
   };
 
+  const handleCloseSelectModal = () => {
+    setSelectOptions(null);
+    setmodelName(null);
+    setShowSelectModal(false);
+  }
   const stringToHex = (str) => {
     return '0x' + Array.from(new TextEncoder().encode(str)).map((byte) => {
       return ('0' + (byte & 0xFF).toString(16)).slice(-2);
     }).join('');
   }
-
-  const hexToString = (hex) => {
-    if (hex.startsWith('0x')) {
-        hex = hex.slice(2);
-    }
-
-    if (hex !== null && hex.length > 0) {
-      const pairs = hex.match(/.{1,2}/g);
-
-      const chars = pairs.map(pair => String.fromCharCode(parseInt(pair, 16)));
-  
-      return chars.join('');
-  } else {
-      return JSON.stringify({ title: "Nothing to show" });
-  }
-}
 
   const handleDatasetButtonClick = async (model_name) => {
     try {
@@ -137,15 +141,15 @@ export default function BasicTable() {
               const lines = csvString.split('\n');
               const headers = lines[0].replace("\r", "").split(',');
               const rows = [];
-            
+
               for (let i = 1; i < lines.length; i++) {
                 const row = [];
                 let currentField = '';
                 let withinQuotes = false;
-            
+
                 for (let j = 0; j < lines[i].length; j++) {
                   const char = lines[i][j];
-            
+
                   if (char === '"') {
                     withinQuotes = !withinQuotes;
                   } else if (char === ',' && !withinQuotes) {
@@ -155,14 +159,14 @@ export default function BasicTable() {
                     currentField += char;
                   }
                 }
-            
+
                 row.push(currentField.trim());
                 const isEmptyRow = row.every(value => value === '');
                 if (!isEmptyRow) {
                   rows.push(row);
                 }
               }
-            
+
               return rows.map(row => {
                 const obj = {};
                 for (let i = 0; i < headers.length; i++) {
@@ -171,9 +175,9 @@ export default function BasicTable() {
                 return obj;
               });
             };
-            
-          
-    
+
+
+
             const parsingDataset = parseCsvString(jsonData["csv_data"])
             if (jsonData["dataset_type"] === "images") {
               localStorage.setItem(Cookies.get('userID') + "-" + model_name + "-images", JSON.stringify(parsingDataset));
@@ -185,7 +189,7 @@ export default function BasicTable() {
             setDatasetData(parsingDataset);
             setmodelName(model_name);
             setShowModal(true);
-          
+
           } catch (error) {
             console.error('Error parsing JSON:', error);
           }
@@ -198,60 +202,110 @@ export default function BasicTable() {
     }
   };
 
-  const convertWeiToEther = (wei) => {
-    return wei / Math.pow(10, 18);
-  }
-
   const handleTrainButtonClick = async (model_name) => {
+    if (localStorage.getItem('training') === true) {
+
+    } else {
+      setModelToTrain(model_name);
+      setTrainingModalOpen(true);
+    }
+  };
+
+  const fetchTrainingStatus = async (model_name) => {
     try {
+      const response = await Axios.get(STATUS(Cookies.get('userID')));
 
+      if (response.status === 200) {
+        localStorage.removeItem('training');
+        const data_hash = response.data.hash;
 
+        console.log(data_hash)
 
+        const response_version = await Axios.get(VERSION(Cookies.get('userID'), model_name));
+        console.log(response_version)
 
-      //la final dupa ce facem tot train ul facem faza asta cu weighturile
-      if (typeof window !== 'undefined' && window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const userAddress = accounts[0];
-
-        const message = {
-                          "user_id": Cookies.get('userID'),
-                          "model_name": model_name,
-                          "hash": "this is a hash"
-                        }
+        if (typeof window !== 'undefined' && window.ethereum) {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const userAddress = accounts[0];
+  
+          const message = {
+            "user_id": Cookies.get('userID'),
+            "model_name": model_name,
+            "version": response_version.data,
+            "data_hash": data_hash,
+  
+          }
+  
+          const messageHex = stringToHex(JSON.stringify(message));
+          const transactionObject = {
+            from: userAddress,
+            to: "0x3370f9123C27768E5DD26238813e2405Fc76b3d3",
+            value: '0x' + (parseInt(1, 10) * 1e18).toString(16),
+            gasLimit: '0x000000001',
+            data: messageHex,
+          };
+  
+          const signedTransaction = await window.ethereum.request({
+            method: 'eth_sendTransaction',
+            params: [transactionObject],
+          });
+        }
         
-        const messageHex = stringToHex(JSON.stringify(message));
-        const transactionObject = {
-          from: userAddress,
-          to: "0xCFEc104a5234493A463915e29A9b32D90D6b9c5B",
-          value: '0x' + (parseInt(1, 10)* 1e18).toString(16),
-          gasLimit: '0x000000001',
-          data: messageHex,
-        };
-
-        const signedTransaction = await window.ethereum.request({
-          method: 'eth_sendTransaction',
-          params: [transactionObject],
-        });
-        
-        const response = await Axios.get(GET_TRANSACTIONS(userAddress));
-
-        // const mappedTransactions = response.data.map((transaction) => ({
-        //   hash: transaction.hash,
-        //   to: transaction.to,
-        //   value: convertWeiToEther(+transaction.value),
-        //   input: hexToString(transaction.input),
-        //   user_id: JSON.parse(hexToString(transaction.input)).user_id,
-        //   model_name: JSON.parse(hexToString(transaction.input)).model_name,
-        //   hash: JSON.parse(hexToString(transaction.input)).hash
-        // }));
-
-        // console.log(mappedTransactions);
-
+        setStatus(status);
+      } else if (status === 500) {
+        localStorage.removeItem('training');
+        handleSnackbar('Error fetching training status: Internal Server Error', 'error');
+      } else {
+        console.log('aici')
       }
+    } catch (error) {
+      console.error('Error fetching training status:', error);
+      handleSnackbar('Error fetching training status: Network Error', 'error');
+    }
+  };
+
+  const handleSubmitTrainingModal = async (formData) => {
+    try {
+      const data = {
+        ...formData,
+        user_id: Cookies.get('userID'),
+        model_name: modelToTrain,
+        batch_size: parseInt(formData.batch_size),
+        epochs: parseInt(formData.epochs),
+        learning_rate: parseFloat(formData.learning_rate)
+      };
+
+
+      localStorage.setItem('training', JSON.stringify(true));
+      const response = await Axios.post(TRAIN, data);
+
+      setTrainingModalOpen(false);
     } catch (error) {
       console.error('Error fetching data for Train:', error);
     }
   };
+
+  const handleDownloadWeights = async (model_name) => {
+    const response = await Axios.get(GET_VERSIONS(Cookies.get('userID'), model_name));
+    setSelectOptions(response.data);
+    setmodelName(model_name);
+    setShowSelectModal(true);
+  }
+
+  const handleSnackbar = (message, severity) => {
+    setSnackbarMessage(message)
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarMessage(null);
+    setSnackbarOpen(false);
+  };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '120vh', marginTop: '15vh' }}>
@@ -259,10 +313,11 @@ export default function BasicTable() {
         <Table aria-label="simple table">
           <TableHead>
             <TableRow>
-              <TableCell align="center">Name</TableCell>
-              <TableCell align="center">Architecture</TableCell>
-              <TableCell align="center">Dataset</TableCell>
-              <TableCell align="center">Train</TableCell>
+              <TableCell align="center">NAME</TableCell>
+              <TableCell align="center">ARCHITECTURE</TableCell>
+              <TableCell align="center">DATASET</TableCell>
+              <TableCell align="center">TRAIN</TableCell>
+              <TableCell align="center">DOWNLOAD WEIGHTS</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -283,7 +338,7 @@ export default function BasicTable() {
                       backgroundColor: "var(--secondaryColor)",
                     },
                   }}>
-                    Architecture
+                    ARCHITECTURE
                   </Button>
                 </TableCell>
                 <TableCell align="center">
@@ -295,11 +350,36 @@ export default function BasicTable() {
                       backgroundColor: "var(--secondaryColor)",
                     },
                   }}>
-                    Dataset
+                    DATASET
                   </Button>
                 </TableCell>
                 <TableCell align="center">
-                  <Button variant="contained" onClick={() => handleTrainButtonClick(name)} sx={{
+                  {localStorage.getItem('training') ? (
+                    <Button variant="contained" onClick={() =>  fetchTrainingStatus(name)} sx={{
+                      backgroundColor: "var(--mainColor)",
+                      color: "var(--textColor)",
+                      cursor: "pointer",
+                      "&:hover": {
+                        backgroundColor: "var(--secondaryColor)",
+                      },
+                    }}>
+                      Training in progress
+                    </Button>
+                  ) : (
+                    <Button variant="contained" onClick={() => handleTrainButtonClick(name)} sx={{
+                      backgroundColor: "var(--mainColor)",
+                      color: "var(--textColor)",
+                      cursor: "pointer",
+                      "&:hover": {
+                        backgroundColor: "var(--secondaryColor)",
+                      },
+                    }}>
+                      TRAIN
+                    </Button>
+                  )}
+                </TableCell>
+                <TableCell align="center">
+                  <Button variant="contained" onClick={() => handleDownloadWeights(name)} sx={{
                     backgroundColor: "var(--mainColor)",
                     color: "var(--textColor)",
                     cursor: "pointer",
@@ -307,7 +387,7 @@ export default function BasicTable() {
                       backgroundColor: "var(--secondaryColor)",
                     },
                   }}>
-                    Train
+                    SELECT VERSION
                   </Button>
                 </TableCell>
               </TableRow>
@@ -342,8 +422,17 @@ export default function BasicTable() {
             </div>
           </div>
         </div>
-
       )}
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={1000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
 
       {showModal && contentType === 'images' && (
         <ImageModal data={datasetData} handleCloseModal={handleCloseModal} />
@@ -352,6 +441,16 @@ export default function BasicTable() {
       {showModal && contentType === 'csv' && (
         <CSVModal data={datasetData} handleCloseModal={handleCloseModal} />
       )}
+
+      {showSelectModal && (
+        <SelectModal open={showSelectModal} model_name={modelName} handleSnackbar={handleSnackbar} handleClose={handleCloseSelectModal} options={selectOptions} />
+      )}
+
+      <TrainingModal
+        open={trainingModalOpen}
+        onClose={() => setTrainingModalOpen(false)}
+        onSubmit={handleSubmitTrainingModal}
+      />
 
     </div>
 
