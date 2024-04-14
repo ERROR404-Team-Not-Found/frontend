@@ -13,14 +13,19 @@ import { GET_LAYERS, GET_ACTIVATION } from "../../utils/apiEndpoints";
 function ModelCreator() {
   const [isCreatingLayer, setIsCreatingLayer] = useState(false);
   const [isCreatingActvFunc, setIsCreatingActvFunc] = useState(false);
+
   const [layers, setLayers] = useState(null);
   const [activation, setActivation] = useState(null);
+
   const [layerCount, setLayerCount] = useState(1);
   const [actvFuncCount, setActvFuncCount] = useState(1);
+  
   const [selectedLayer, setSelectedLayer] = useState(null);
   const [selectedActivation, setSelectedActivation] = useState(null);
+
   const [yAxis, setYAxis] = useState(100);
   const [createdNode, setCreatedNode] = useState(null);
+  
   const isLayerCreateRun = useRef(false);
   const isActvFuncCreateRun = useRef(false);
 
