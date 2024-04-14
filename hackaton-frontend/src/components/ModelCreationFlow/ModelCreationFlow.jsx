@@ -10,7 +10,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { nodeTypes } from "../../utils/nodeTypes";
 
-function ModelCreationFlow({ data }) {
+function ModelCreationFlow({ data, changed, setChanged }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const areNodesUpdating = useRef(false);
@@ -48,27 +48,39 @@ function ModelCreationFlow({ data }) {
             }
           }
       }
+
       setNodes(auxArray);
       areNodesUpdating.current = false;
     }
   }, [nodes, setNodes]);
 
   useEffect(() => {
-    const localNode = JSON.parse(localStorage.getItem("newData"));
-    if (localNode && !areNodesUpdating.current) {
-      setNodes((prevNodes) => {
-        const index = prevNodes.findIndex((node) => node.id === localNode.id);
-
-        if (index !== -1) {
-          const updatedNodes = [...prevNodes];
-          updatedNodes[index] = localNode;
-          return updatedNodes;
-        } else {
-          return [...prevNodes];
+    let localNode = JSON.parse(localStorage.getItem("newData"));
+    if (localNode) {
+      let updatedNode = nodes;
+      if (updatedNode.length < 1) {
+        setNodes([localNode]);
+      } else {
+        const lastNode = updatedNode[updatedNode.length - 1];
+        let found;
+        for (let x of lastNode.data.inputs) {
+          if (x.name.includes("out")) {
+            found = x.value;
+            break;
+          }
         }
-      });
+        for (let x = 0; x < localNode.data.inputs.length; x++) {
+          if (localNode.data.inputs[x].name.includes("in")) {
+            localNode.data.inputs[x].value = found;
+            break;
+          }
+        }
+        updatedNode = [...updatedNode, localNode];
+        localStorage.setItem("nodes", JSON.stringify(updatedNode));
+        setNodes(updatedNode);
+      }
     }
-  }, [nodes, setNodes]);
+  }, [changed]);
 
   return (
     <div style={{ width: "100%", height: "100%" }}>

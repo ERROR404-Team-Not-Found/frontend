@@ -25,17 +25,21 @@ function ModelNode({ data, isConnectable }) {
   const handleSetProperty = () => {
     if (nodeParameters) {
       let updatedDataAuxiliary = { ...dataAuxiliary };
-
       updatedDataAuxiliary.inputs = updatedDataAuxiliary.inputs.map(
         (element) => {
           if (element.name === nodeParameters.name) {
-            return { ...element, value: textFieldValueModal };
+            return { ...element, value: parseInt(textFieldValueModal) };
           } else {
             return element;
           }
         }
       );
-      localStorage.setItem("newData", JSON.stringify(updatedDataAuxiliary));
+      let localModel = JSON.parse(localStorage.getItem("newData"));
+      for (let x = 0; x < updatedDataAuxiliary.inputs.length; x++) {
+        localModel.data.inputs[x] = updatedDataAuxiliary.inputs[x];
+      }
+
+      localStorage.setItem("newData", JSON.stringify(localModel));
       setDataAuxiliary(updatedDataAuxiliary);
       setTextFieldValueModal("");
       setModalOpen(false);

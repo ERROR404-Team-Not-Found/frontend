@@ -46,7 +46,7 @@ function ModelCreator() {
 
   const [modelName, setModelName] = useState(null);
   const [classesCount, setClassesCount] = useState(null);
-
+  const [changed, setChanged] = useState(false);
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
@@ -80,11 +80,24 @@ function ModelCreator() {
     jsonData.user_id = Cookies.get("userID");
     jsonData.layers = [];
     try {
-      for (let node of layers) {
-        jsonData.layers.push({ name: node.label, params: node.data.inputs });
+      let localNodes = JSON.parse(localStorage.getItem("nodes"));
+      console.log(localNodes);
+      for (let node of localNodes) {
+        if (node.data.type === "activation-function") {
+          continue;
+        }
+        const aux = {};
+        for (let x of node.data.inputs) {
+          console.log(x)
+          aux[x.name] = x.value;
+        }
+        jsonData.layers.push({ name: node.data.label, params: aux });
       }
-      jsonData.num_classes = classesCount;
-      // await axios.post(SAVE_MODEL, jsonData);
+
+      jsonData.num_classes = parseInt(classesCount);
+      jsonData.activation_function = "relu";
+      console.log(jsonData);
+      //await axios.post(SAVE_MODEL, jsonData);
       openSnackbar("Success: Model has been saved!");
     } catch (error) {
       console.error(error);
@@ -133,7 +146,7 @@ function ModelCreator() {
   };
 
   const handleAddLayer = () => {
-    setCreatedNode({
+    const newLayer = {
       id: `Layer-${layerCount}`,
       type: "modelNode",
       data: {
@@ -142,30 +155,34 @@ function ModelCreator() {
         inputs: layers.find((layer) => layer.name === selectedLayer).inputs,
       },
       position: { x: 100, y: yAxis },
-    });
+    };
+
+    setCreatedNode(newLayer);
     setYAxis(yAxis + 200);
     setLayerCount(layerCount + 1);
-
+    localStorage.setItem("newData", JSON.stringify(newLayer));
+    setChanged(true);
     setIsCreatingLayer(false);
     setSelectedLayer(null);
   };
 
   const handleAddActvFunc = () => {
     if (actvFuncCount < 2) {
-      setCreatedNode({
+      const newActvFunc = {
         id: `Activation-${actvFuncCount}`,
         type: "modelNode",
         data: {
           label: selectedActivation,
           type: "activation-function",
-          inputs: activation.find(
-            (actvFunc) => actvFunc.name === selectedActivation
-          ).inputs,
+          inputs: [],
         },
         position: { x: 300, y: yAxis },
-      });
+      };
+      setCreatedNode(newActvFunc);
       setYAxis(yAxis + 200);
       setActvFuncCount(actvFuncCount + 1);
+      localStorage.setItem("newData", JSON.stringify(newActvFunc));
+      setChanged(true);
 
       setIsCreatingActvFunc(false);
       setSelectedActivation(null);
@@ -176,7 +193,11 @@ function ModelCreator() {
 
   return (
     <div style={{ width: "100%", height: "90vh", position: "relative" }}>
-      <ModelCreationFlow data={createdNode} layerName={createdNode?.id} />
+      <ModelCreationFlow
+        data={createdNode}
+        changed={changed}
+        setChanged={setChanged}
+      />
 
       {isCreatingLayer ? (
         <Grid
@@ -611,7 +632,7 @@ function ModelCreator() {
         onClick={handleOpenDialog}
         sx={{
           display:
-            layerCount + actvFuncCount < 6 ||
+            layerCount + actvFuncCount < 4 ||
             isCreatingLayer ||
             isCreatingActvFunc
               ? "none"
