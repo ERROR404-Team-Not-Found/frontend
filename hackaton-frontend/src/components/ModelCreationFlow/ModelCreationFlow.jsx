@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -13,12 +13,7 @@ import { nodeTypes } from "../../utils/nodeTypes";
 function ModelCreationFlow({ data, layerName }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
-
+  const areNodesUpdating = useRef(false);
   useEffect(() => {
     if (data) {
       const addEdgeToNewNode = (currentNodeId, newNodeId) => {
@@ -32,10 +27,46 @@ function ModelCreationFlow({ data, layerName }) {
       };
 
       setNodes((prevNodes) => [...prevNodes, data]);
-
       addEdgeToNewNode(nodes[nodes?.length - 1]?.id, data?.id);
     }
-  }, [data, layerName, setNodes]);
+  }, [data, nodes, setNodes, setEdges]);
+
+  useEffect(() => {
+    if (nodes) {
+      areNodesUpdating.current = true;
+      let auxArray = nodes;
+      for (let i = 0; i < nodes.length - 1; i++) {
+        if (auxArray[i + 1].data.type !== "activation-function")
+          for (let elem of auxArray[i + 1].data.inputs) {
+            if (elem.name.toLowerCase().includes("in")) {
+              elem.value = auxArray[i].data.inputs.find(
+                (el) => el.name.toLowerCase().includes("out")[0]
+              );
+            }
+          }
+      }
+      setNodes(auxArray);
+      areNodesUpdating.current = false;
+    }
+  }, [nodes, setNodes]);
+
+  useEffect(() => {
+    const localNode = JSON.parse(localStorage.getItem("newData"));
+    if (localNode && !areNodesUpdating.current) {
+      setNodes((prevNodes) => {
+        const index = prevNodes.findIndex((node) => node.id === localNode.id);
+
+        if (index !== -1) {
+          const updatedNodes = [...prevNodes];
+          updatedNodes[index] = localNode;
+          return updatedNodes;
+        } else {
+          return [...prevNodes];
+        }
+      });
+    }
+  }, [nodes, setNodes]);
+
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <ReactFlow
@@ -43,7 +74,6 @@ function ModelCreationFlow({ data, layerName }) {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
         nodeTypes={nodeTypes}
       >
         <Controls />

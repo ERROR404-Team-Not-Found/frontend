@@ -35,7 +35,7 @@ function ModelNode({ data, isConnectable }) {
           }
         }
       );
-      console.log(updatedDataAuxiliary);
+      localStorage.setItem("newData", JSON.stringify(updatedDataAuxiliary));
       setDataAuxiliary(updatedDataAuxiliary);
       setTextFieldValueModal("");
       setModalOpen(false);
