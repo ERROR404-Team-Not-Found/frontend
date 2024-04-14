@@ -63,11 +63,16 @@ function ModelCreator() {
     formData.append("file", fileInput);
 
     try {
-      const response = await axios.post(UPLOAD_FILE, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.post(
+        UPLOAD_FILE(Cookies.get("userID"), "hackathonmodel"),
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Accept: "application/zip",
+          },
+        }
+      );
 
       console.log("File uploaded successfully:", response);
     } catch (error) {
