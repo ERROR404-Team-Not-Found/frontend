@@ -23,6 +23,7 @@ function createData(name) {
   return { name };
 }
 
+
 export default function BasicTable() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -46,17 +47,16 @@ export default function BasicTable() {
 
   const [status, setStatus] = useState(null);
 
-
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const response = await Axios.get(GET_MODELS(Cookies.get('userID')));
+      const response = await Axios.get(GET_MODELS(Cookies.get("userID")));
       setBackendData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
   };
 
@@ -76,18 +76,25 @@ export default function BasicTable() {
 
   const handleArchitectureButtonClick = async (model_name) => {
     try {
-      const storedData = localStorage.getItem(Cookies.get('userID') + "-" + model_name + "-architecture");
+      const storedData = localStorage.getItem(
+        Cookies.get("userID") + "-" + model_name + "-architecture"
+      );
       if (storedData) {
         setArchitectureData(JSON.parse(storedData));
         setmodelName(model_name);
       } else {
-        const response = await Axios.get(GET_ARCHITECTURE(Cookies.get('userID'), model_name));
-        localStorage.setItem(Cookies.get('userID') + "-" + model_name + "-architecture", JSON.stringify(response.data));
+        const response = await Axios.get(
+          GET_ARCHITECTURE(Cookies.get("userID"), model_name)
+        );
+        localStorage.setItem(
+          Cookies.get("userID") + "-" + model_name + "-architecture",
+          JSON.stringify(response.data)
+        );
         setArchitectureData(response.data);
         setmodelName(model_name);
       }
     } catch (error) {
-      console.error('Error fetching data for Architecture:', error);
+      console.error("Error fetching data for Architecture:", error);
     }
   };
 
@@ -104,15 +111,24 @@ export default function BasicTable() {
     setShowSelectModal(false);
   }
   const stringToHex = (str) => {
-    return '0x' + Array.from(new TextEncoder().encode(str)).map((byte) => {
-      return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-    }).join('');
-  }
+    return (
+      "0x" +
+      Array.from(new TextEncoder().encode(str))
+        .map((byte) => {
+          return ("0" + (byte & 0xff).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+  };
 
   const handleDatasetButtonClick = async (model_name) => {
     try {
-      const storedImageData = localStorage.getItem(Cookies.get('userID') + "-" + model_name + "-images");
-      const storedCsvData = localStorage.getItem(Cookies.get('userID') + "-" + model_name + "-csv");
+      const storedImageData = localStorage.getItem(
+        Cookies.get("userID") + "-" + model_name + "-images"
+      );
+      const storedCsvData = localStorage.getItem(
+        Cookies.get("userID") + "-" + model_name + "-csv"
+      );
 
       if (storedImageData) {
         setDatasetData(JSON.parse(storedImageData));
@@ -125,10 +141,12 @@ export default function BasicTable() {
         setcontentType("csv");
         setShowModal(true);
       } else {
-
-        const response = await Axios.get(GET_DATASET(Cookies.get('userID'), model_name), {
-          responseType: 'blob'
-        });
+        const response = await Axios.get(
+          GET_DATASET(Cookies.get("userID"), model_name),
+          {
+            responseType: "blob",
+          }
+        );
 
         const blob = new Blob([response.data]);
         const reader = new FileReader();
@@ -138,13 +156,13 @@ export default function BasicTable() {
             jsonData = JSON.parse(reader.result);
 
             const parseCsvString = (csvString) => {
-              const lines = csvString.split('\n');
-              const headers = lines[0].replace("\r", "").split(',');
+              const lines = csvString.split("\n");
+              const headers = lines[0].replace("\r", "").split(",");
               const rows = [];
 
               for (let i = 1; i < lines.length; i++) {
                 const row = [];
-                let currentField = '';
+                let currentField = "";
                 let withinQuotes = false;
 
                 for (let j = 0; j < lines[i].length; j++) {
@@ -152,22 +170,23 @@ export default function BasicTable() {
 
                   if (char === '"') {
                     withinQuotes = !withinQuotes;
-                  } else if (char === ',' && !withinQuotes) {
+                  } else if (char === "," && !withinQuotes) {
                     row.push(currentField.trim());
-                    currentField = '';
+                    currentField = "";
                   } else {
                     currentField += char;
                   }
                 }
 
                 row.push(currentField.trim());
-                const isEmptyRow = row.every(value => value === '');
+                const isEmptyRow = row.every((value) => value === "");
                 if (!isEmptyRow) {
                   rows.push(row);
                 }
               }
 
-              return rows.map(row => {
+              return rows.map((row) => {
+
                 const obj = {};
                 for (let i = 0; i < headers.length; i++) {
                   obj[headers[i]] = row[i];
@@ -176,29 +195,34 @@ export default function BasicTable() {
               });
             };
 
+            const parsingDataset = parseCsvString(jsonData["csv_data"]);
 
-
-            const parsingDataset = parseCsvString(jsonData["csv_data"])
             if (jsonData["dataset_type"] === "images") {
-              localStorage.setItem(Cookies.get('userID') + "-" + model_name + "-images", JSON.stringify(parsingDataset));
-              setcontentType('images');
+              localStorage.setItem(
+                Cookies.get("userID") + "-" + model_name + "-images",
+                JSON.stringify(parsingDataset)
+              );
+              setcontentType("images");
             } else {
-              localStorage.setItem(Cookies.get('userID') + "-" + model_name + "-csv", JSON.stringify(parsingDataset));
-              setcontentType('csv');
+              localStorage.setItem(
+                Cookies.get("userID") + "-" + model_name + "-csv",
+                JSON.stringify(parsingDataset)
+              );
+              setcontentType("csv");
             }
             setDatasetData(parsingDataset);
             setmodelName(model_name);
             setShowModal(true);
 
           } catch (error) {
-            console.error('Error parsing JSON:', error);
+            console.error("Error parsing JSON:", error);
           }
         };
 
         reader.readAsText(blob);
       }
     } catch (error) {
-      console.error('Error fetching data for Dataset:', error);
+      console.error("Error fetching data for Dataset:", error);
     }
   };
 
@@ -282,6 +306,7 @@ export default function BasicTable() {
       setTrainingModalOpen(false);
     } catch (error) {
       console.error('Error fetching data for Train:', error);
+
     }
   };
 
@@ -308,10 +333,18 @@ export default function BasicTable() {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '120vh', marginTop: '15vh' }}>
-      <TableContainer component={Paper} sx={{ width: '80vw' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        height: "120vh",
+        marginTop: "15vh",
+      }}
+    >
+      <TableContainer component={Paper} sx={{ width: "80vw" }}>
         <Table aria-label="simple table">
-          <TableHead>
+          <TableHead sx={{ borderBottom: "2px solid var(--secondaryColor)" }}>
             <TableRow>
               <TableCell align="center">NAME</TableCell>
               <TableCell align="center">ARCHITECTURE</TableCell>
@@ -406,19 +439,65 @@ export default function BasicTable() {
       </TableContainer>
 
       {architectureData && (
-        <div style={{ position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh', zIndex: '9999', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: '#fff', padding: '20px', borderRadius: '10px', maxWidth: '90vw', maxHeight: '90vh', overflow: 'auto' }}>
-            <h2 style={{ textAlign: 'left', marginBottom: '20px' }}>Model: {modelName.toUpperCase()}</h2>
-            <Editor height="50vh" width="140vh" theme="vs-dark" defaultLanguage="python" value={architectureData} options={{ readOnly: true }} />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <Button variant="contained" onClick={handleCloseEditor} sx={{
-                backgroundColor: "var(--mainColor)",
-                color: "var(--textColor)",
-                cursor: "pointer",
-                "&:hover": {
-                  backgroundColor: "var(--secondaryColor)",
-                },
-              }}>Close</Button>
+        <div
+          style={{
+            position: "fixed",
+            top: "0",
+            left: "0",
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              backgroundColor: "#fff",
+              padding: "20px",
+              borderRadius: "10px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              overflow: "auto",
+            }}
+          >
+            <h2 style={{ textAlign: "left", marginBottom: "20px" }}>
+              Model:{" "}
+              {modelName.charAt(0).toUpperCase() +
+                modelName.slice(1).toLowerCase()}
+            </h2>
+            <Editor
+              height="50vh"
+              width="140vh"
+              theme="vs-dark"
+              defaultLanguage="python"
+              value={architectureData}
+              options={{ readOnly: true }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginTop: "20px",
+              }}
+            >
+              <Button
+                variant="contained"
+                onClick={handleCloseEditor}
+                sx={{
+                  backgroundColor: "var(--mainColor)",
+                  color: "var(--textColor)",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "var(--secondaryColor)",
+                  },
+                }}
+              >
+                Close
+              </Button>
             </div>
           </div>
         </div>
@@ -438,9 +517,10 @@ export default function BasicTable() {
         <ImageModal data={datasetData} handleCloseModal={handleCloseModal} />
       )}
 
-      {showModal && contentType === 'csv' && (
+      {showModal && contentType === "csv" && (
         <CSVModal data={datasetData} handleCloseModal={handleCloseModal} />
       )}
+      
 
       {showSelectModal && (
         <SelectModal open={showSelectModal} model_name={modelName} handleSnackbar={handleSnackbar} handleClose={handleCloseSelectModal} options={selectOptions} />
@@ -451,8 +531,6 @@ export default function BasicTable() {
         onClose={() => setTrainingModalOpen(false)}
         onSubmit={handleSubmitTrainingModal}
       />
-
     </div>
-
   );
 }

@@ -13,6 +13,6 @@ export const VERSION = (user_id, model_name) => `${TRAIN_BASE_URL}/model/version
 
 export const GET_TRANSACTIONS = (user_address) => `${BLOCKCHAIN_SEVICE_BASE_URL}${user_address}`
 
-
 export const GET_ACTIVATION = `${BASE_URL}/model/activations`;
 export const GET_LAYERS = `${BASE_URL}/model/layers`;
+export const SAVE_MODEL = `${BASE_URL}/model/create`;

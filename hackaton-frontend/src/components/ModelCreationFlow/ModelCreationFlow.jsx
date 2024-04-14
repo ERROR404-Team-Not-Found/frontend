@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -8,29 +8,76 @@ import ReactFlow, {
   addEdge,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { nodeTypes } from "../../utils/nodeTypes";
 
-function ModelCreationFlow({ data, layerName }) {
-  const [displayedNodes, setDisplayedNodes] = useState([]);
-  const [edgeArray, setEdgeArray] = useState([]);
+function ModelCreationFlow({ data }) {
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const areNodesUpdating = useRef(false);
+  useEffect(() => {
+    if (data) {
+      const addEdgeToNewNode = (currentNodeId, newNodeId) => {
+        const edge = {
+          id: `e-${currentNodeId}-${newNodeId}`,
+          source: currentNodeId,
+          target: newNodeId,
+          type: "default",
+        };
+        setEdges((eds) => addEdge(edge, eds));
+      };
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(displayedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(edgeArray);
+      setNodes((prevNodes) => [...prevNodes, data]);
+      addEdgeToNewNode(nodes[nodes?.length - 1]?.id, data?.id);
+    }
+  }, [data, nodes, setNodes, setEdges]);
 
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
+  useEffect(() => {
+    if (nodes) {
+      areNodesUpdating.current = true;
+      let auxArray = nodes;
+      for (let i = 0; i < nodes.length - 1; i++) {
+        if (auxArray[i + 1].data.type !== "activation-function")
+          for (let elem of auxArray[i + 1].data.inputs) {
+            if (
+              elem.name.toLowerCase().includes("in") &&
+              auxArray[i].data.type !== "activation-function"
+            ) {
+              elem.value = auxArray[i].data.inputs.find(
+                (el) => el.name.toLowerCase().includes("out")[0]
+              );
+            }
+          }
+      }
+      setNodes(auxArray);
+      areNodesUpdating.current = false;
+    }
+  }, [nodes, setNodes]);
 
-  useEffect(() => {}, [data, layerName]);
+  useEffect(() => {
+    const localNode = JSON.parse(localStorage.getItem("newData"));
+    if (localNode && !areNodesUpdating.current) {
+      setNodes((prevNodes) => {
+        const index = prevNodes.findIndex((node) => node.id === localNode.id);
+
+        if (index !== -1) {
+          const updatedNodes = [...prevNodes];
+          updatedNodes[index] = localNode;
+          return updatedNodes;
+        } else {
+          return [...prevNodes];
+        }
+      });
+    }
+  }, [nodes, setNodes]);
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <ReactFlow
-        nodes={displayedNodes}
-        edges={edgeArray}
+        nodes={nodes}
+        edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        nodeTypes={nodeTypes}
       >
         <Controls />
         <MiniMap />
@@ -39,4 +86,5 @@ function ModelCreationFlow({ data, layerName }) {
     </div>
   );
 }
+
 export default ModelCreationFlow;
