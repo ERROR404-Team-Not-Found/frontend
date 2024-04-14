@@ -6,9 +6,20 @@ import Grid from "@mui/material/Grid";
 import Divider from "@mui/material/Divider";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
+import Snackbar from "@mui/material/Snackbar";
+import MuiAlert from "@mui/material/Alert";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import axios from "axios";
-import { GET_LAYERS, GET_ACTIVATION } from "../../utils/apiEndpoints";
+import {
+  GET_LAYERS,
+  GET_ACTIVATION,
+  SAVE_MODEL,
+} from "../../utils/apiEndpoints";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Cookies from "js-cookie";
 
 function ModelCreator() {
   const [isCreatingLayer, setIsCreatingLayer] = useState(false);
@@ -19,15 +30,39 @@ function ModelCreator() {
 
   const [layerCount, setLayerCount] = useState(1);
   const [actvFuncCount, setActvFuncCount] = useState(1);
-  
+
   const [selectedLayer, setSelectedLayer] = useState(null);
   const [selectedActivation, setSelectedActivation] = useState(null);
 
   const [yAxis, setYAxis] = useState(100);
   const [createdNode, setCreatedNode] = useState(null);
-  
+
   const isLayerCreateRun = useRef(false);
   const isActvFuncCreateRun = useRef(false);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const [modelName, setModelName] = useState(null);
+  const [classesCount, setClassesCount] = useState(null);
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  const openSnackbar = (message) => {
+    setSnackbarMessage(message);
+    setSnackbarOpen(true);
+  };
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
 
   const handleCreateLayerClick = async () => {
     setIsCreatingLayer(true);
@@ -35,6 +70,25 @@ function ModelCreator() {
 
   const handleCreateActvFuncClick = async () => {
     setIsCreatingActvFunc(true);
+  };
+
+  const handleSaveModelClick = async () => {
+    handleCloseDialog();
+
+    let jsonData = {};
+    jsonData.name = modelName;
+    jsonData.user_id = Cookies.get("userID");
+    jsonData.layers = [];
+    try {
+      for (let node of layers) {
+        jsonData.layers.push({ name: node.label, params: node.data.inputs });
+      }
+      jsonData.num_classes = classesCount;
+      await axios.post(SAVE_MODEL, jsonData);
+      openSnackbar("Success: Model has been saved!");
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   useEffect(() => {
@@ -89,7 +143,7 @@ function ModelCreator() {
       },
       position: { x: 100, y: yAxis },
     });
-    setYAxis(yAxis + 50);
+    setYAxis(yAxis + 200);
     setLayerCount(layerCount + 1);
 
     setIsCreatingLayer(false);
@@ -97,23 +151,27 @@ function ModelCreator() {
   };
 
   const handleAddActvFunc = () => {
-    setCreatedNode({
-      id: `Activation-${actvFuncCount}`,
-      type: "modelNode",
-      data: {
-        label: selectedActivation,
-        type: "activation-function",
-        inputs: activation.find(
-          (actvFunc) => actvFunc.name === selectedActivation
-        ).inputs,
-      },
-      position: { x: 300, y: yAxis },
-    });
-    setYAxis(yAxis + 50);
-    setActvFuncCount(actvFuncCount + 1);
+    if (actvFuncCount < 2) {
+      setCreatedNode({
+        id: `Activation-${actvFuncCount}`,
+        type: "modelNode",
+        data: {
+          label: selectedActivation,
+          type: "activation-function",
+          inputs: activation.find(
+            (actvFunc) => actvFunc.name === selectedActivation
+          ).inputs,
+        },
+        position: { x: 300, y: yAxis },
+      });
+      setYAxis(yAxis + 200);
+      setActvFuncCount(actvFuncCount + 1);
 
-    setIsCreatingActvFunc(false);
-    setSelectedActivation(null);
+      setIsCreatingActvFunc(false);
+      setSelectedActivation(null);
+    } else {
+      openSnackbar("Error: Can't have more than 1 activation function");
+    }
   };
 
   return (
@@ -547,6 +605,80 @@ function ModelCreator() {
           Add A.F
         </Button>
       )}
+
+      <Button
+        variant="contained"
+        onClick={handleOpenDialog}
+        sx={{
+          display:
+            layerCount + actvFuncCount < 8 ||
+            isCreatingLayer ||
+            isCreatingActvFunc
+              ? "none"
+              : "flex",
+          position: "absolute",
+          width: "140px",
+          top: "100px",
+          left: "30px",
+          padding: "10px",
+          pr: "20px",
+          pl: "20px",
+          borderRadius: "5px",
+          backgroundColor: "var(--mainColor)",
+          color: "var(--textColor)",
+          cursor: "pointer",
+          "&:hover": {
+            backgroundColor: "var(--secondaryColor)",
+          },
+        }}
+      >
+        Save Model
+      </Button>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <MuiAlert
+          elevation={6}
+          variant="filled"
+          onClose={handleSnackbarClose}
+          severity={snackbarMessage.toLowerCase().split(":")[0]}
+        >
+          {snackbarMessage}
+        </MuiAlert>
+      </Snackbar>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Save Model</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to save this model?</Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="modelName"
+            label="Model Name"
+            type="text"
+            fullWidth
+            value={modelName}
+            onChange={(e) => setModelName(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            id="numClasses"
+            label="Number of Classes"
+            type="number"
+            fullWidth
+            value={classesCount}
+            onChange={(e) => setClassesCount(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSaveModelClick}>Save</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

@@ -5,3 +5,4 @@ export const GET_ARCHITECTURE = (user_id, model_name) => `${BASE_URL}/model/arch
 export const GET_DATASET = (user_id, model_name) => `${BASE_URL}/model/dataset?user_id=${user_id}&model_name=${model_name}`
 export const GET_ACTIVATION = `${BASE_URL}/model/activations`;
 export const GET_LAYERS = `${BASE_URL}/model/layers`;
+export const SAVE_MODEL = `${BASE_URL}/model/create`;

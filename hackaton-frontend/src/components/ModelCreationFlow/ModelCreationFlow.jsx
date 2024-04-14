@@ -10,7 +10,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { nodeTypes } from "../../utils/nodeTypes";
 
-function ModelCreationFlow({ data, layerName }) {
+function ModelCreationFlow({ data }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const areNodesUpdating = useRef(false);
@@ -38,7 +38,10 @@ function ModelCreationFlow({ data, layerName }) {
       for (let i = 0; i < nodes.length - 1; i++) {
         if (auxArray[i + 1].data.type !== "activation-function")
           for (let elem of auxArray[i + 1].data.inputs) {
-            if (elem.name.toLowerCase().includes("in")) {
+            if (
+              elem.name.toLowerCase().includes("in") &&
+              auxArray[i].data.type !== "activation-function"
+            ) {
               elem.value = auxArray[i].data.inputs.find(
                 (el) => el.name.toLowerCase().includes("out")[0]
               );
