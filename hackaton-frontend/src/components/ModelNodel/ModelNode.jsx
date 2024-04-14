@@ -29,7 +29,7 @@ function ModelNode({ data, isConnectable }) {
       updatedDataAuxiliary.inputs = updatedDataAuxiliary.inputs.map(
         (element) => {
           if (element.name === nodeParameters.name) {
-            return { value: textFieldValueModal };
+            return { ...element, value: textFieldValueModal };
           } else {
             return element;
           }
@@ -102,8 +102,10 @@ function ModelNode({ data, isConnectable }) {
                     item
                     sx={{ justifyContent: "flex-end", alignContent: "center" }}
                   >
-                    <Typography sx={{ pr: "10px" }}>
-                      {dataAuxiliary.inputs[element.name]}
+                    <Typography sx={{ pr: "10px", color: "var(--textColor)" }}>
+                      {dataAuxiliary.inputs.find(
+                        (item) => item.name === element.name
+                      )?.value || ""}
                     </Typography>
                   </Grid>
                   <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
