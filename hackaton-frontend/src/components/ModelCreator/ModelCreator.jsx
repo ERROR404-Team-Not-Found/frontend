@@ -9,11 +9,14 @@ import TextField from "@mui/material/TextField";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import Modal from "@mui/material/Modal";
+
 import axios from "axios";
 import {
   GET_LAYERS,
   GET_ACTIVATION,
   SAVE_MODEL,
+  UPLOAD_FILE,
 } from "../../utils/apiEndpoints";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -46,7 +49,43 @@ function ModelCreator() {
 
   const [modelName, setModelName] = useState(null);
   const [classesCount, setClassesCount] = useState(null);
+  const [openModalData, setOpenModalData] = useState(false);
 
+  const [fileInput, setFileInput] = useState(null);
+
+  const handleUpload = async () => {
+    if (!fileInput) {
+      console.error("No file selected.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput);
+
+    try {
+      const response = await axios.post(UPLOAD_FILE, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      console.log("File uploaded successfully:", response);
+    } catch (error) {
+      console.error("There was a problem with the file upload:", error);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    setFileInput(e.target.files[0]);
+  };
+
+  const openDataUploadModal = () => {
+    setOpenModalData(true);
+  };
+
+  const closeUploadModal = () => {
+    setOpenModalData(false);
+  };
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
@@ -75,20 +114,38 @@ function ModelCreator() {
   const handleSaveModelClick = async () => {
     handleCloseDialog();
 
-    let jsonData = {};
-    jsonData.name = modelName;
-    jsonData.user_id = Cookies.get("userID");
-    jsonData.layers = [];
-    try {
-      for (let node of layers) {
-        jsonData.layers.push({ name: node.label, params: node.data.inputs });
-      }
-      jsonData.num_classes = classesCount;
-      // await axios.post(SAVE_MODEL, jsonData);
-      openSnackbar("Success: Model has been saved!");
-    } catch (error) {
-      console.error(error);
-    }
+    // let jsonData = {};
+    // jsonData.name = modelName;
+    // jsonData.user_id = Cookies.get("userID");
+    // jsonData.layers = [];
+    // try {
+    //   for (let node of layers) {
+    //     jsonData.layers.push({ name: node.label, params: node.data.inputs });
+    //   }
+    //   jsonData.num_classes = classesCount;
+
+    const dummyData = {
+      name: "HackathonModel",
+      user_id: Cookies.get("userID"),
+      layers: [
+        {
+          name: "Conv2d",
+          params: { in_channels: 3, out_channels: 64, kernel_size: 3 },
+        },
+        {
+          name: "Conv2d",
+          params: { in_channels: 64, out_channels: 128, kernel_size: 3 },
+        },
+      ],
+      activation_function: "relu",
+      num_classes: 10,
+    };
+    openSnackbar("Success: Model has been saved!");
+    await axios.post(SAVE_MODEL, dummyData);
+    openSnackbar("Success: Model has been saved!");
+    // } catch (error) {
+    //   console.error(error);
+    // }
   };
 
   useEffect(() => {
@@ -635,6 +692,35 @@ function ModelCreator() {
         Save Model
       </Button>
 
+      <Button
+        variant="contained"
+        onClick={openDataUploadModal}
+        sx={{
+          display:
+            layerCount + actvFuncCount < 6 ||
+            isCreatingLayer ||
+            isCreatingActvFunc
+              ? "none"
+              : "flex",
+          position: "absolute",
+          width: "140px",
+          top: "160px",
+          left: "30px",
+          padding: "10px",
+          pr: "20px",
+          pl: "20px",
+          borderRadius: "5px",
+          backgroundColor: "var(--mainColor)",
+          color: "var(--textColor)",
+          cursor: "pointer",
+          "&:hover": {
+            backgroundColor: "var(--secondaryColor)",
+          },
+        }}
+      >
+        Upload Dataset
+      </Button>
+
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -679,6 +765,46 @@ function ModelCreator() {
           <Button onClick={handleSaveModelClick}>Save</Button>
         </DialogActions>
       </Dialog>
+
+      <Modal
+        open={openModalData}
+        onClose={closeUploadModal}
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "white",
+            padding: "20px",
+          }}
+        >
+          <h2 id="modal-title">Upload File</h2>
+          <TextField
+            id="file-input"
+            type="file"
+            onChange={handleFileChange}
+            InputProps={{
+              inputProps: {
+                accept:
+                  ".txt,.pdf,.doc,.docx,.xls,.xlsx,.csv,.zip,.rar,.png,.jpg,.jpeg",
+              },
+            }}
+            fullWidth
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            style={{ marginTop: "20px" }}
+            onClick={handleUpload}
+          >
+            Upload
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

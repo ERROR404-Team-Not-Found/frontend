@@ -16,3 +16,4 @@ export const GET_TRANSACTIONS = (user_address) => `${BLOCKCHAIN_SEVICE_BASE_URL}
 export const GET_ACTIVATION = `${BASE_URL}/model/activations`;
 export const GET_LAYERS = `${BASE_URL}/model/layers`;
 export const SAVE_MODEL = `${BASE_URL}/model/create`;
+export const UPLOAD_FILE = (user_id,model_name) =>`${BASE_URL}/model/dataset?user_id=${user_id}&model_name=${model_name}&`;
