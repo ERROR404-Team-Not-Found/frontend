@@ -29,13 +29,13 @@ function ModelNode({ data, isConnectable }) {
       updatedDataAuxiliary.inputs = updatedDataAuxiliary.inputs.map(
         (element) => {
           if (element.name === nodeParameters.name) {
-            return { [element.name]: textFieldValueModal };
+            return { value: textFieldValueModal };
           } else {
             return element;
           }
         }
       );
-
+      console.log(updatedDataAuxiliary);
       setDataAuxiliary(updatedDataAuxiliary);
       setTextFieldValueModal("");
       setModalOpen(false);
@@ -63,7 +63,7 @@ function ModelNode({ data, isConnectable }) {
             data.inputs.map((element, index) => {
               return (
                 <Grid container item key={index}>
-                  <Grid container item>
+                  <Grid xs={8} container item>
                     <Tooltip
                       enterDelay={500}
                       title={element.description}
@@ -96,9 +96,14 @@ function ModelNode({ data, isConnectable }) {
                       </Button>
                     </Tooltip>
                   </Grid>
-                  <Grid container item>
-                    <Typography>
-                      {nodeParameters && nodeParameters[element.label]}
+                  <Grid
+                    xs={4}
+                    container
+                    item
+                    sx={{ justifyContent: "flex-end", alignContent: "center" }}
+                  >
+                    <Typography sx={{ pr: "10px" }}>
+                      {dataAuxiliary.inputs[element.name]}
                     </Typography>
                   </Grid>
                   <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
