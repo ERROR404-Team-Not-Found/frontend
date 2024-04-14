@@ -1,23 +1,28 @@
-import React, { useState, useEffect } from "react";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import Button from "@mui/material/Button";
-import TablePagination from "@mui/material/TablePagination";
-import {
-  GET_ARCHITECTURE,
-  GET_MODELS,
-  GET_DATASET,
-} from "../../utils/apiEndpoints";
-import Cookies from "js-cookie";
-import Axios from "axios";
+import React, { useState, useEffect } from 'react';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import TablePagination from '@mui/material/TablePagination';
+import { GET_ARCHITECTURE, GET_MODELS, GET_DATASET, GET_VERSIONS, TRAIN, STATUS, VERSION} from '../../utils/apiEndpoints';
+import Cookies from 'js-cookie';
+import Axios from 'axios';
 import Editor from "@monaco-editor/react";
-import ImageModal from "../ImageModal/ImageModal";
-import CSVModal from "../CSVModal/CSVModal";
+import ImageModal from '../ImageModal/ImageModal';
+import CSVModal from '../CSVModal/CSVModal';
+import SelectModal from '../SelectModal/SelectModal';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import TrainingModal from '../TrainingModal/TrainingModal';
+
+function createData(name) {
+  return { name };
+}
+
 
 export default function BasicTable() {
   const [page, setPage] = useState(0);
@@ -28,6 +33,19 @@ export default function BasicTable() {
   const [modelName, setmodelName] = useState(null);
   const [contentType, setcontentType] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showSelectModal, setShowSelectModal] = useState(false);
+  const [selectOptions, setSelectOptions] = useState([]);
+
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState('error');
+
+  const [modelToTrain, setModelToTrain] = useState(null);
+  const [trainingModalOpen, setTrainingModalOpen] = useState(false);
+
+  const [trainingStatusIntervalId, setTrainingStatusIntervalId] = useState(null);
+
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -87,6 +105,11 @@ export default function BasicTable() {
     setcontentType(null);
   };
 
+  const handleCloseSelectModal = () => {
+    setSelectOptions(null);
+    setmodelName(null);
+    setShowSelectModal(false);
+  }
   const stringToHex = (str) => {
     return (
       "0x" +
@@ -163,6 +186,7 @@ export default function BasicTable() {
               }
 
               return rows.map((row) => {
+
                 const obj = {};
                 for (let i = 0; i < headers.length; i++) {
                   obj[headers[i]] = row[i];
@@ -172,6 +196,7 @@ export default function BasicTable() {
             };
 
             const parsingDataset = parseCsvString(jsonData["csv_data"]);
+
             if (jsonData["dataset_type"] === "images") {
               localStorage.setItem(
                 Cookies.get("userID") + "-" + model_name + "-images",
@@ -188,6 +213,7 @@ export default function BasicTable() {
             setDatasetData(parsingDataset);
             setmodelName(model_name);
             setShowModal(true);
+
           } catch (error) {
             console.error("Error parsing JSON:", error);
           }
@@ -201,37 +227,110 @@ export default function BasicTable() {
   };
 
   const handleTrainButtonClick = async (model_name) => {
-    try {
-      if (typeof window !== "undefined" && window.ethereum) {
-        const accounts = await window.ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        const userAddress = accounts[0];
+    if (localStorage.getItem('training') === true) {
 
-        const message = {
-          user_id: Cookies.get("userID"),
-          model_name: model_name,
-          hash: "this is a hash",
-        };
-
-        const messageHex = stringToHex(JSON.stringify(message));
-        const transactionObject = {
-          from: userAddress,
-          to: this.data.value.Eth_adress,
-          value: "0x" + (parseInt(0.1, 10) * 1e18).toString(16),
-          gasLimit: "0x000000001",
-          data: messageHex,
-        };
-
-        const signedTransaction = await window.ethereum.request({
-          method: "eth_sendTransaction",
-          params: [transactionObject],
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching data for Train:", error);
+    } else {
+      setModelToTrain(model_name);
+      setTrainingModalOpen(true);
     }
   };
+
+  const fetchTrainingStatus = async (model_name) => {
+    try {
+      const response = await Axios.get(STATUS(Cookies.get('userID')));
+
+      if (response.status === 200) {
+        localStorage.removeItem('training');
+        const data_hash = response.data.hash;
+
+        console.log(data_hash)
+
+        const response_version = await Axios.get(VERSION(Cookies.get('userID'), model_name));
+        console.log(response_version)
+
+        if (typeof window !== 'undefined' && window.ethereum) {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const userAddress = accounts[0];
+  
+          const message = {
+            "user_id": Cookies.get('userID'),
+            "model_name": model_name,
+            "version": response_version.data,
+            "data_hash": data_hash,
+  
+          }
+  
+          const messageHex = stringToHex(JSON.stringify(message));
+          const transactionObject = {
+            from: userAddress,
+            to: "0x3370f9123C27768E5DD26238813e2405Fc76b3d3",
+            value: '0x' + (parseInt(1, 10) * 1e18).toString(16),
+            gasLimit: '0x000000001',
+            data: messageHex,
+          };
+  
+          const signedTransaction = await window.ethereum.request({
+            method: 'eth_sendTransaction',
+            params: [transactionObject],
+          });
+        }
+        
+        setStatus(status);
+      } else if (status === 500) {
+        localStorage.removeItem('training');
+        handleSnackbar('Error fetching training status: Internal Server Error', 'error');
+      } else {
+        console.log('aici')
+      }
+    } catch (error) {
+      console.error('Error fetching training status:', error);
+      handleSnackbar('Error fetching training status: Network Error', 'error');
+    }
+  };
+
+  const handleSubmitTrainingModal = async (formData) => {
+    try {
+      const data = {
+        ...formData,
+        user_id: Cookies.get('userID'),
+        model_name: modelToTrain,
+        batch_size: parseInt(formData.batch_size),
+        epochs: parseInt(formData.epochs),
+        learning_rate: parseFloat(formData.learning_rate)
+      };
+
+
+      localStorage.setItem('training', JSON.stringify(true));
+      const response = await Axios.post(TRAIN, data);
+
+      setTrainingModalOpen(false);
+    } catch (error) {
+      console.error('Error fetching data for Train:', error);
+
+    }
+  };
+
+  const handleDownloadWeights = async (model_name) => {
+    const response = await Axios.get(GET_VERSIONS(Cookies.get('userID'), model_name));
+    setSelectOptions(response.data);
+    setmodelName(model_name);
+    setShowSelectModal(true);
+  }
+
+  const handleSnackbar = (message, severity) => {
+    setSnackbarMessage(message)
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarMessage(null);
+    setSnackbarOpen(false);
+  };
+
 
   return (
     <div
@@ -247,112 +346,85 @@ export default function BasicTable() {
         <Table aria-label="simple table">
           <TableHead sx={{ borderBottom: "2px solid var(--secondaryColor)" }}>
             <TableRow>
-              <TableCell
-                align="center"
-                sx={{
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  color: "var(--mainColor)",
-                }}
-              >
-                Name
-              </TableCell>
-              <TableCell
-                align="center"
-                sx={{
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  color: "var(--mainColor)",
-                }}
-              >
-                Architecture
-              </TableCell>
-              <TableCell
-                align="center"
-                sx={{
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  color: "var(--mainColor)",
-                }}
-              >
-                Dataset
-              </TableCell>
-              <TableCell
-                align="center"
-                sx={{
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  color: "var(--mainColor)",
-                }}
-              >
-                Train
-              </TableCell>
+              <TableCell align="center">NAME</TableCell>
+              <TableCell align="center">ARCHITECTURE</TableCell>
+              <TableCell align="center">DATASET</TableCell>
+              <TableCell align="center">TRAIN</TableCell>
+              <TableCell align="center">DOWNLOAD WEIGHTS</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {backendData &&
-              backendData.length > 0 &&
-              (rowsPerPage > 0
-                ? backendData.slice(
-                    page * rowsPerPage,
-                    page * rowsPerPage + rowsPerPage
-                  )
-                : backendData
-              ).map((name, index) => (
-                <TableRow key={index}>
-                  <TableCell align="center" component="th" scope="row">
-                    {name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()}
-                  </TableCell>
-                  <TableCell align="center">
-                    <Button
-                      variant="contained"
-                      onClick={() => handleArchitectureButtonClick(name)}
-                      sx={{
-                        backgroundColor: "var(--mainColor)",
-                        color: "var(--textColor)",
-                        cursor: "pointer",
-                        "&:hover": {
-                          backgroundColor: "var(--secondaryColor)",
-                        },
-                      }}
-                    >
-                      Architecture
+            {backendData && backendData.length > 0 && (rowsPerPage > 0
+              ? backendData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              : backendData
+            ).map((name, index) => (
+              <TableRow key={index}>
+                <TableCell align="center" component="th" scope="row">
+                  {name}
+                </TableCell>
+                <TableCell align="center">
+                  <Button variant="contained" onClick={() => handleArchitectureButtonClick(name)} sx={{
+                    backgroundColor: "var(--mainColor)",
+                    color: "var(--textColor)",
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "var(--secondaryColor)",
+                    },
+                  }}>
+                    ARCHITECTURE
+                  </Button>
+                </TableCell>
+                <TableCell align="center">
+                  <Button variant="contained" onClick={() => handleDatasetButtonClick(name)} sx={{
+                    backgroundColor: "var(--mainColor)",
+                    color: "var(--textColor)",
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "var(--secondaryColor)",
+                    },
+                  }}>
+                    DATASET
+                  </Button>
+                </TableCell>
+                <TableCell align="center">
+                  {localStorage.getItem('training') ? (
+                    <Button variant="contained" onClick={() =>  fetchTrainingStatus(name)} sx={{
+                      backgroundColor: "var(--mainColor)",
+                      color: "var(--textColor)",
+                      cursor: "pointer",
+                      "&:hover": {
+                        backgroundColor: "var(--secondaryColor)",
+                      },
+                    }}>
+                      Training in progress
                     </Button>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Button
-                      variant="contained"
-                      onClick={() => handleDatasetButtonClick(name)}
-                      sx={{
-                        backgroundColor: "var(--mainColor)",
-                        color: "var(--textColor)",
-                        cursor: "pointer",
-                        "&:hover": {
-                          backgroundColor: "var(--secondaryColor)",
-                        },
-                      }}
-                    >
-                      Dataset
+                  ) : (
+                    <Button variant="contained" onClick={() => handleTrainButtonClick(name)} sx={{
+                      backgroundColor: "var(--mainColor)",
+                      color: "var(--textColor)",
+                      cursor: "pointer",
+                      "&:hover": {
+                        backgroundColor: "var(--secondaryColor)",
+                      },
+                    }}>
+                      TRAIN
                     </Button>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Button
-                      variant="contained"
-                      onClick={() => handleTrainButtonClick(name)}
-                      sx={{
-                        backgroundColor: "var(--mainColor)",
-                        color: "var(--textColor)",
-                        cursor: "pointer",
-                        "&:hover": {
-                          backgroundColor: "var(--secondaryColor)",
-                        },
-                      }}
-                    >
-                      Train
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                  )}
+                </TableCell>
+                <TableCell align="center">
+                  <Button variant="contained" onClick={() => handleDownloadWeights(name)} sx={{
+                    backgroundColor: "var(--mainColor)",
+                    color: "var(--textColor)",
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "var(--secondaryColor)",
+                    },
+                  }}>
+                    SELECT VERSION
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
         <TablePagination
@@ -431,13 +503,34 @@ export default function BasicTable() {
         </div>
       )}
 
-      {showModal && contentType === "images" && (
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={1000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+
+      {showModal && contentType === 'images' && (
         <ImageModal data={datasetData} handleCloseModal={handleCloseModal} />
       )}
 
       {showModal && contentType === "csv" && (
         <CSVModal data={datasetData} handleCloseModal={handleCloseModal} />
       )}
+      
+
+      {showSelectModal && (
+        <SelectModal open={showSelectModal} model_name={modelName} handleSnackbar={handleSnackbar} handleClose={handleCloseSelectModal} options={selectOptions} />
+      )}
+
+      <TrainingModal
+        open={trainingModalOpen}
+        onClose={() => setTrainingModalOpen(false)}
+        onSubmit={handleSubmitTrainingModal}
+      />
     </div>
   );
 }
